@@ -19,8 +19,8 @@
 #include "422ToNv16.h"
 
 int main(int argc, const char * argv[]) {
-    int fd_rd;
-    int fd_wr;
+    int ifd;
+    int ofd;
     
     uint8_t *y;
     uint8_t *u;
@@ -35,7 +35,7 @@ int main(int argc, const char * argv[]) {
     uint8_t *u_et_v_dst;
     
     char *cp;
-    char output_file_name[256];
+    char output[256] = { 0 };
 
     
     if (argc < 4)
@@ -53,23 +53,22 @@ int main(int argc, const char * argv[]) {
     img         = NULL;
     u_et_v_dst  = NULL;
     cp          = NULL;
-    memset(output_file_name, 0, sizeof(output_file_name));
     
     // get input file name from comand line
-    fd_rd = open(argv[1], O_RDONLY);
-    if (fd_rd < 0)
+    ifd = open(argv[1], O_RDONLY);
+    if (ifd < 0)
     {
         perror(argv[1]);
         exit(EXIT_FAILURE);
     }
     
     // specify output file name
-    cp = strchr(argv[1], '.');
-    strncpy(output_file_name, argv[1], cp - argv[1]);
-    strcat(output_file_name, "_nv16");
-    strcat(output_file_name, cp);
+    cp = strrchr(argv[1], '.');
+    strncpy(output, argv[1], cp - argv[1]);
+    strcat(output, "_nv16");
+    strcat(output, cp);
     
-    fd_wr = open(output_file_name, O_WRONLY | O_CREAT, S_IRUSR);
+    ofd = open(output, O_WRONLY | O_CREAT, S_IRUSR);
     
     width   = atoi(argv[2]);
     height  = atoi(argv[3]);
@@ -87,7 +86,7 @@ int main(int argc, const char * argv[]) {
     
     while (1)
     {
-        rd_sz = read(fd_rd, img, wxh * 2);
+        rd_sz = read(ifd, img, wxh * 2);
         
         if (rd_sz == wxh * 2)
         {
@@ -99,8 +98,8 @@ int main(int argc, const char * argv[]) {
                 v
             );
             
-            write(fd_wr, y, wxh);
-            write(fd_wr, u_et_v_dst, wxh);
+            write(ofd, y, wxh);
+            write(ofd, u_et_v_dst, wxh);
         }
         else
         {
@@ -110,11 +109,11 @@ int main(int argc, const char * argv[]) {
         fflush(stdout);
     }
     
-    close(fd_rd);
-    close(fd_wr);
+    close(ifd);
+    close(ofd);
     
     fprintf(stderr, "Done\n");
-    fprintf(stderr, "Output file: %s\n", output_file_name);
+    fprintf(stderr, "Output file: %s\n", output);
     
     return 0;
 }
