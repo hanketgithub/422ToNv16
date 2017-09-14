@@ -13,10 +13,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "422ToNv16.h"
+
+
+struct timeval tv1, tv2, res;
+
 
 int main(int argc, const char * argv[]) {
     int ifd;
@@ -36,6 +41,7 @@ int main(int argc, const char * argv[]) {
     
     char *cp;
     char output[256] = { 0 };
+    int frame_cnt;
 
     
     if (argc < 4)
@@ -53,6 +59,7 @@ int main(int argc, const char * argv[]) {
     img         = NULL;
     u_et_v_dst  = NULL;
     cp          = NULL;
+    frame_cnt   = 0;
     
     // get input file name from comand line
     ifd = open(argv[1], O_RDONLY);
@@ -84,6 +91,8 @@ int main(int argc, const char * argv[]) {
     
     fprintf(stderr, "Processing: ");
     
+    gettimeofday(&tv1, NULL);
+
     while (1)
     {
         rd_sz = read(ifd, img, wxh * 2);
@@ -100,6 +109,7 @@ int main(int argc, const char * argv[]) {
             
             write(ofd, y, wxh);
             write(ofd, u_et_v_dst, wxh);
+            frame_cnt++;
         }
         else
         {
@@ -109,11 +119,15 @@ int main(int argc, const char * argv[]) {
         fflush(stdout);
     }
     
+    gettimeofday(&tv2, NULL);
+    timersub(&tv2, &tv1, &res);
+
     close(ifd);
     close(ofd);
     
     fprintf(stderr, "Done\n");
     fprintf(stderr, "Output file: %s\n", output);
+    fprintf(stderr, "FPS: %ld\n", frame_cnt / res.tv_sec);
     
     return 0;
 }
