@@ -7,5 +7,8 @@ OPTS = -Wall
 all: $(objects)
 	$(CC) $(OPTS) -o $(target) $(objects)
 
+install:
+	cp $(target) /usr/local/bin
+
 clean:
 	$(RM) $(target) $(objects)
